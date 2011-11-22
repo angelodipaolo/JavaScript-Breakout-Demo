@@ -3,14 +3,17 @@
 	by angelo di paolo
 ==================================*/
 
+//graphics
+var canvas;
+var context;
 
 //game elements
 var paddle;
 var ball;
-var this.level;
+var level;
 var frameSize;
 var gameInput;
-var this.level;
+var level;
 var touch;
 
 var isGameRunning;
@@ -22,244 +25,97 @@ $(document).ready(function(){
 /*=================
 	init
 =================*/
-Breakout = {
+function Breakout() {
 
-	var canvas = document.getElementById('gameFrame');
+	//init drawing
+	canvas = document.getElementById('gameFrame');
+	context = canvas.getContext('2d');
+	frameSize = {width:720, height:540};
 
+	//init game elements
+	paddle = Paddle(frameSize.width/2 - 50/2, frameSize.height - 60, 65, 12);
+	ball = Ball(paddle.rect.position.x + paddle.rect.width/2, paddle.rect.position.y-5,0,0);
+
+	//init level
+	level = new Level();
+	level.blocks = initBlockArray(level);
+
+	//input
+	gameInput = new Input();
+	setupInput();
 
 
 	isGameRunning = true;
-
-	return {
-		this.paddle = new Paddle(frameSize.width/2 - 50/2, frameSize.height - 60, 65, 12),
-		this.ball = new Ball(paddle.rect.position.x + paddle.rect.width/2, paddle.rect.position.y-5,0,0),
-		this.level = new Level(),
-		this.blocks = new BlockArray(this.level),
-		this.gameInput = new GameInputs(),
-		this.context = canvas.getContext('2d'),
-		this.HUD = new HUD();
-		this.frameSize = {width:720, height:540},
-		this.isGameRunning = false,
-		this.mode = GameMode();		
-		runGame: function() {
-
-			this.initGame();
-
-			setInterval('update()',10);
-
-
-			this.update();
-			this.draw();
-		},
-		initGame: function() {
-			
-			//draw intro
-
-
-
-
-		}
-		update: function() {
-
-			//getinput
-
-			
-			//check for launch and give ball velocity
-			if(this.gameInput.isSpacebarDown && !this.ball.isMoving) {
-				this.ball.velocity.x = this.ball.speed;
-				this.ball.velocity.y = -this.ball.speed;
-				this.ball.isMoving = true;
-			}
-
-
-
-			//respond to this.ball collision
-			if(this.ball.didCollide) {
-
-				//restore last frame's position
-				this.ball.position.x = this.ball.lastPosition.x;
-				this.ball.position.y = this.ball.lastPosition.y;
-
-				//reverse the y velocity
-				this.ball.velocity.y = -this.ball.velocity.y;
-				this.ball.didCollide = false;
-			}
-
-			if(this.ball.isMoving) {
-
-				//update this.ball position based on velocity
-				this.ball.position.x = this.ball.position.x + this.ball.velocity.x;
-				this.ball.position.y = this.ball.position.y + this.ball.velocity.y;
-
-
-				if(this.ball.position.x > frameSize.width) {
-					this.ball.velocity.x = -this.ball.speed;
-				}
-				else if(this.ball.position.x < 0) {
-					this.ball.velocity.x = this.ball.speed;
-				}
-
-				else if(this.ball.position.y < 0) {
-					this.ball.velocity.y = this.ball.speed;
-				}
-				else if(this.ball.position.y > frameSize.height) {
-					
-					this.level.balls--;
-
-					//reset
-					this.ball.isMoving = false;
-					this.paddle.rect.position.x = frameSize.width/2 - 50/2;
-					this.paddle.rect.position.y = frameSize.height - 60;
-					this.ball.position.x = this.paddle.rect.position.x + this.paddle.rect.width/2;
-					this.ball.position.y = this.paddle.rect.position.y-5;		
-					this.ball.velocity.y = 0;
-					this.ball.velocity.x = 0;
-				}
-			}
-			else {
-				this.ball.position.x = this.paddle.rect.position.x + this.paddle.rect.width/2;
-			}
-
-			this.ball.lastPosition.x = this.ball.position.x;
-			this.ball.lastPosition.y = this.ball.position.y;
-
-			if(this.level.balls == 0) {
-				this.isGameRunning = false;
-			}
-
-		},
-		checkCollision: function() {
-			
-			//draw a bounding box rect around the ball for collision
-			var ballOffsetX = ball.position.x - ball.radius;
-			var ballOffsetY = ball.position.y - ball.radius;
-			var ballRect = Rect(ballOffsetX, ballOffsetY, ball.width, ball.height);
-
-			//determine collsion by bounding box test
-			this.ball.didCollide = doesRectIntersect(ballRect, paddle.rect);
-
-			//search for a ball/block collision
-			for(var i = 0; i < this.level.rowCount * this.level.columnCount; i++) {
-
-				if(!this.level.blocks[i].isDestroyed && doesRectIntersect(ballRect, this.level.blocks[i].rect)) {
-
-					this.level.blocks[i].isDestroyed = true;
-					this.ball.didCollide = true;
-					this.level.score++;
-				}
-				
-			}
-		},
-		draw: function() {
-			
-			//clear frame
-			this.context.clearRect(0,0,this.frameSize.width,this.frameSize.height);
-
-			//this.ball.draw(this.context); //drawBall(ball);
-
-			this.ball.rect.draw(this.context);
-			//draw paddle
-			drawRect(this.paddle.rect, this.paddle.color);
-
-			//draw blocks
-			for(var i = 0; i < this.level.rowCount * this.level.columnCount; i++) {
-
-				var block = this.level.blocks[i];
-
-				if(!block.isDestroyed)
-					block.rect.draw(this.context);
-			}
-
-			this.HUD.draw(context, thislevel); //drawHUD();
-		
-		}
-
-	};
+	return setInterval('runGame()',10);
 }
 
-function GameMode() {
+function setupInput() {
 
-	return {
-		Intro:0,
-		Running:1,
-		GameOver:2	
-	};
+
+	$('#gameFrame').mousemove(function(e){
+		
+		//change position of paddle based on mouse
+		var targetX = e.offsetX;
+		var paddleHalfWidth = (paddle.rect.width / 2);
+
+		//keep paddle within frame bounds
+		if(targetX + paddleHalfWidth  > frameSize.width) {
+			targetX = frameSize.width - paddleHalfWidth;
+		}
+		else if(targetX - paddleHalfWidth < 0) {
+			targetX = paddleHalfWidth;
+		}
+
+		paddle.rect.position.x =  targetX - (paddle.rect.width / 2);
+	});	
+
+	$(document).keydown(function(e){
+		
+		//left arrow
+		if (e.keyCode == 37) { 
+			gameInput.isLeftKeyDown = true;
+	      // return false;
+		}
+		//right arrow
+		else if (e.keyCode == 39) {
+			gameInput.isRightKeyDown = true;
+	        //return false;			
+		}
+		//space bar
+		else if(e.keyCode == 32) {
+			gameInput.isSpacebarDown = true;
+		}
+	});	
+
+	$(document).keyup(function(e){
+
+		//left arrow
+		if (e.keyCode == 37) {
+			gameInput.isLeftKeyDown = false;
+	       	//return false;
+		}
+		//right arrow
+		else if (e.keyCode == 39) {
+			gameInput.isRightKeyDown = false;		
+		}
+		//space bar
+		else if(e.keyCode == 32) {
+			gameInput.isSpacebarDown = false;
+		}
+	});	
+
+
 }
 
 function Input() {
-
-	var mousePositionX;
-	var mousePositionY;
-
-
-
 	return {
 		isLeftKeyDown:false,
 		isRightKeyDown:false,
-		isSpacebarDown:false,
-		mousePosition: new Vector(),
-
-		init:function() {
-
-			$('#gameFrame').mousemove(function(e){
-				
-				//change position of paddle based on mouse
-				var targetX = e.pageX - this.offsetLeft;
-
-				this.mousePosi
-
-				var paddleHalfWidth = (paddle.rect.width / 2);
-
-				//keep paddle within frame bounds
-				if(targetX + paddleHalfWidth  > frameSize.width) {
-					targetX = frameSize.width - paddleHalfWidth;
-				}
-				else if(targetX - paddleHalfWidth < 0) {
-					targetX = paddleHalfWidth;
-				}
-
-				paddle.rect.position.x =  targetX - (paddle.rect.width / 2);
-			});	
-
-			$(document).keydown(function(e){
-				
-				//left arrow
-				if (e.keyCode == 37) { 
-					this.isLeftKeyDown = true;
-			      // return false;
-				}
-				//right arrow
-				else if (e.keyCode == 39) {
-					this.isRightKeyDown = true;
-			        //return false;			
-				}
-				//space bar
-				else if(e.keyCode == 32) {
-					this.isSpacebarDown = true;
-				}
-			});	
-
-			$(document).keyup(function(e){
-
-				//left arrow
-				if (e.keyCode == 37) {
-					inputObject.isLeftKeyDown = false;
-			       	//return false;
-				}
-				//right arrow
-				else if (e.keyCode == 39) {
-					inputObject.isRightKeyDown = false;		
-				}
-				//space bar
-				else if(e.keyCode == 32) {
-					inputObject.isSpacebarDown = false;
-				}
-			});				
-		}
+		isSpacebarDown:false
 	};
 }
 
-Vector = function(x, y) {
+function Vector(x, y) {
 	return {
 		x:x,
 		y:y
@@ -267,22 +123,10 @@ Vector = function(x, y) {
 }	
 
 function Rect(positionX, positionY, width, height) {
-
 	return {
 		position: Vector(positionX, positionY),
 		width:width,
-		height:height,
-		doesInsersect:function(rectToTest) {
-			
-			if(rectToTest.position.y > this.position.y && rectToTest.position.y < this.position.y + this.height)	{
-				if(rectToTest.position.x  < this.position.x + this.width && rectToTest.position.x > this.position.x) 
-					return true;
-			}
-		},
-		draw:function(context) {
-			
-			context.fillRect(this.position.x ,this.position.y, this.width, this.height);
-		}
+		height:height
 	};
 }
 
@@ -318,14 +162,7 @@ function Ball(positionX, positionY, startVelX, startVelY) {
 		radius:6,
 		color:'#fe57a1',
 		isMoving:false,
-		didCollide:false,
-		draw:function(context) {
-			context.fillStyle = this.color;
-			context.beginPath();
-			context.arc(ballObject.position.x, ballObject.position.y, ballObject.radius, 0,Math.PI*2,true);
-			context.closePath();
-			context.fill();
-		}
+		didCollide:false
 	};
 }
 
@@ -344,8 +181,7 @@ function Level() {
 	};
 }
 
-
-function BlockArray(levelObject) {
+function initBlockArray(levelObject) {
 
 	blocks = new Array(levelObject.rowCount * levelObject.columnCount);
 
@@ -371,7 +207,6 @@ function BlockArray(levelObject) {
 }
 
 function Block(positionX, positionY, width, height) {
-
 	return {
 		rect:Rect(positionX, positionY, width, height),
 		position: Vector(positionX, positionY),
@@ -381,36 +216,13 @@ function Block(positionX, positionY, width, height) {
 	};
 }
 
-function HUD() {
-	return {
-		draw:function(context, levelObject) {
-			//draw hud
-			context.fillStyle = levelObject.ball.color;
-			var ballCirc = ball.radius * 2;
-			var x = frameSize.width - ((ballCirc +2 ) * 3) - 10;
-			var y = frameSize.height - ballCirc - 2;
 
-			for(var i = 0; i < this.level.balls; i++ ) {
-				
-				context.beginPath();
-				context.arc(x ,y, ball.radius, 0,Math.PI*2,true);
-				context.closePath();
-				context.fill();
-
-				x += ballCirc + 5;
-			}
-
-			context.fillStyle = '#000';
-			context.font = '11pt Arial';
-			context.fillText(this.level.score.toString(),10,y + 6);
-		}	
-	};
-}
 
 /*=================
 	main loop
 =================*/
 function runGame() {
+	
 	
 	checkCollisions();
 	updateObjects();
@@ -436,24 +248,24 @@ function checkCollisions() {
 	ball.didCollide = doesRectIntersect(ballRect, paddle.rect);
 
 	//search for a ball/block collision
-	for(var i = 0; i < this.level.rowCount * this.level.columnCount; i++) {
+	for(var i = 0; i < level.rowCount * level.columnCount; i++) {
 
-		if(!this.level.blocks[i].isDestroyed && doesRectIntersect(ballRect, this.level.blocks[i].rect)) {
+		if(!level.blocks[i].isDestroyed && doesRectIntersect(ballRect, level.blocks[i].rect)) {
 
-			this.level.blocks[i].isDestroyed = true;
+			level.blocks[i].isDestroyed = true;
 			ball.didCollide = true;
-			this.level.score++;
+			level.score++;
 		}
 		
 	}
 }
 
 //bounding-box collision test
-function doesRectIntersect(rect1, this) {
+function doesRectIntersect(rect1, rect2) {
 
-	if(rect1.position.y > this.position.y && rect1.position.y < this.position.y + this.height)	{
+	if(rect1.position.y > rect2.position.y && rect1.position.y < rect2.position.y + rect2.height)	{
 
-		if(rect1.position.x  < this.position.x + this.width && rect1.position.x > this.position.x) 
+		if(rect1.position.x  < rect2.position.x + rect2.width && rect1.position.x > rect2.position.x) 
 			return true;
 	}
 	return false;
@@ -512,7 +324,7 @@ function updateObjects(){
 		}
 		else if(ball.position.y > frameSize.height) {
 			
-			this.level.balls--;
+			level.balls--;
 
 			//reset
 			ball.isMoving = false;
@@ -531,7 +343,7 @@ function updateObjects(){
 	ball.lastPosition.x = ball.position.x;
 	ball.lastPosition.y = ball.position.y;
 
-	if(this.level.balls == 0) {
+	if(level.balls == 0) {
 		isGameRunning = false;
 	}
 }
@@ -551,15 +363,37 @@ function drawFrame() {
 	drawRect(paddle.rect, paddle.color);
 
 	//draw blocks
-	for(var i = 0; i < this.level.rowCount * this.level.columnCount; i++) {
+	for(var i = 0; i < level.rowCount * level.columnCount; i++) {
 
-		var block = this.level.blocks[i];
+		var block = level.blocks[i];
 
 		if(!block.isDestroyed)
 			drawRect(block.rect, '#CCC');
 	}
 
-	drawHUD();
+
+	//draw hud
+	context.fillStyle = ball.color;
+	var ballCirc = ball.radius * 2;
+	var x = frameSize.width - ((ballCirc +2 ) * 3) - 10;
+	var y = frameSize.height - ballCirc - 2;
+
+	for(var i = 0; i < level.balls; i++ ) {
+		
+		context.beginPath();
+		context.arc(x ,y, ball.radius, 0,Math.PI*2,true);
+		context.closePath();
+		context.fill();
+
+		x += ballCirc + 5;
+
+	}
+
+	context.fillStyle = '#000';
+	context.font = '11pt Arial';
+	context.fillText(level.score.toString(),10,y + 6);
+
+
 }
 
 function drawGameOver() {
@@ -586,7 +420,7 @@ function drawGameOver() {
 	context.fillText('FINAL SCORE', dialogRect.position.x + (dialogRect.width / 2) - 65 ,dialogRect.position.y + 55);
 
 	context.font = '46pt Arial';
-	context.fillText(this.level.score.toString(), dialogRect.position.x + (dialogRect.width / 2) - 54 ,dialogRect.position.y + 110);
+	context.fillText(level.score.toString(), dialogRect.position.x + (dialogRect.width / 2) - 54 ,dialogRect.position.y + 110);
 
 
 	//final score
@@ -601,28 +435,10 @@ function drawGameOver() {
 	context.fillStyle = '#FFF';
 	context.font = '12pt Arial';
 	context.fillText('play again', buttonRect.position.x + (buttonRect.width / 2) - 35  ,buttonRect.position.y + 30);
-}
 
-function drawHUD() {
-	//draw hud
-	context.fillStyle = ball.color;
-	var ballCirc = ball.radius * 2;
-	var x = frameSize.width - ((ballCirc +2 ) * 3) - 10;
-	var y = frameSize.height - ballCirc - 2;
 
-	for(var i = 0; i < this.level.balls; i++ ) {
-		
-		context.beginPath();
-		context.arc(x ,y, ball.radius, 0,Math.PI*2,true);
-		context.closePath();
-		context.fill();
 
-		x += ballCirc + 5;
-	}
 
-	context.fillStyle = '#000';
-	context.font = '11pt Arial';
-	context.fillText(this.level.score.toString(),10,y + 6);
 }
 
 function drawBall(ballObject) {
