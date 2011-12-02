@@ -198,7 +198,6 @@ textarea { overflow: auto; vertical-align: top; resize: vertical; }
 input:valid, textarea:valid {  }
 input:invalid, textarea:invalid { background-color: #f0dddd; }
 
-
 /* =============================================================================
    Tables
    ========================================================================== */
@@ -206,11 +205,9 @@ input:invalid, textarea:invalid { background-color: #f0dddd; }
 table { border-collapse: collapse; border-spacing: 0; }
 td { vertical-align: top; }
 
-
 /* ==|== primary styles =====================================================
-   Author: 
+   Author: angelo di paolo
    ========================================================================== */
-
 
 body {
   color:#FFF;
@@ -222,8 +219,6 @@ body {
 #header_container {
     background-color:#171717;
     margin-bottom:10px;
-
- 
 }
 
 #header {

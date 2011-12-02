@@ -1,40 +1,26 @@
 <!doctype html>
-<html class="no-js" lang="en">
+<html>
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <title>JavaScript Breakout Demo</title>
   <meta name="description" content="breakout clone javascript">
   <meta name="author" content="angelo di paolo">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-   <div id="header_container">
-      <div id="header">
-       <header>
-        <h1>JavaScript Breakout Demo</h1>
-      </header>
-      </div>
-   </div>
-  <div id="container">
-    <div id="main" role="main">
-      <canvas id="gameFrame" width="720" height="540"/> 
+ <div id="header_container">
+    <div id="header">
+     <header>
+      <h1>JavaScript Breakout Demo</h1>
+    </header>
     </div>
-    <div id="footer">
-      <footer>
-        <p>Breakout demo in JavaScript by <a href="http://angelodipaolo.org">Angelo Di Paolo</a>. Get the <a href="https://github.com/angelodipaolo/Javascript-Breakout-Clone">code</a>.</p>
-      </footer>
-    </div>
+ </div>
+<div id="container">
+  <div id="main" role="main">
+    <canvas id="gameFrame" width="720" height="540"/> 
   </div>
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
-  <script>window.jQuery || document.write('<script src="js/libs/jquery-1.6.2.min.js"><\/script>')</script>
-  <script defer src="js/breakout.js"></script>
-  <script>
-    window._gaq = [['_setAccount','UA-17012508-1'],['_trackPageview'],['_trackPageLoadTime']];
-    Modernizr.load({
-      load: ('https:' == location.protocol ? '//ssl' : '//www') + '.google-analytics.com/ga.js'
-    });
-  </script>  
+</div>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script src="js/breakout.js"></script> 
 </body>
 </html>
